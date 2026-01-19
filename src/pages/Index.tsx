@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   Thermometer,
   Droplets,
@@ -6,6 +6,7 @@ import {
   Waves,
   Gauge,
   FlaskConical,
+  Code2,
 } from "lucide-react";
 import { Header } from "@/components/dashboard/Header";
 import { ParameterCard } from "@/components/dashboard/ParameterCard";
@@ -15,38 +16,32 @@ import { NotificationCenter } from "@/components/dashboard/NotificationCenter";
 import { TelemetryModal } from "@/components/dashboard/TelemetryModal";
 import { useMockSensorData } from "@/hooks/useMockSensorData";
 import { StatusType } from "@/components/dashboard/StatusTag";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const mockNotifications = [
   {
     id: "1",
     type: "heartbeat" as const,
     title: "System Heartbeat",
-    message: "RPi-Arduino link established. All sensors reporting normal.",
-    timestamp: "14:32:05",
+    message: "All sensors reporting normal.",
+    timestamp: "14:32",
     read: false,
   },
   {
     id: "2",
     type: "threshold" as const,
-    title: "TDS Threshold Alert",
-    message: "TDS levels approaching upper threshold (950 ppm). Monitor closely.",
-    timestamp: "14:28:41",
+    title: "TDS Alert",
+    message: "TDS approaching upper threshold (950 ppm).",
+    timestamp: "14:28",
     read: false,
   },
   {
     id: "3",
     type: "maintenance" as const,
-    title: "Sensor Calibration Due",
-    message: "pH sensor calibration recommended. Last calibration: 14 days ago.",
-    timestamp: "13:45:22",
-    read: true,
-  },
-  {
-    id: "4",
-    type: "heartbeat" as const,
-    title: "ML Models Updated",
-    message: "GBM and LSTM models retrained with latest 24h data batch.",
-    timestamp: "12:00:00",
+    title: "Calibration Due",
+    message: "pH sensor calibration recommended.",
+    timestamp: "13:45",
     read: true,
   },
 ];
@@ -54,42 +49,34 @@ const mockNotifications = [
 const mockDosingLogs = [
   {
     id: "1",
-    timestamp: "14:25:33",
-    chemical: "Hydrochloric Acid (HCl)",
-    reason: "Neutralizing high alkalinity detected in waste stream",
+    timestamp: "14:25",
+    chemical: "HCl Solution",
+    reason: "Neutralizing high alkalinity",
     amount: "25mL",
-    industry: "Metal Industry",
+    industry: "Metal",
   },
   {
     id: "2",
-    timestamp: "13:58:12",
-    chemical: "Sodium Hydroxide (NaOH)",
-    reason: "Breaking down organic lignin compounds in effluent",
+    timestamp: "13:58",
+    chemical: "NaOH Solution",
+    reason: "Breaking down organic compounds",
     amount: "40mL",
-    industry: "Paper/Textile",
+    industry: "Paper",
   },
   {
     id: "3",
-    timestamp: "12:45:08",
-    chemical: "Sodium Hydroxide (NaOH)",
-    reason: "pH correction for acidic industrial discharge",
+    timestamp: "12:45",
+    chemical: "NaOH Solution",
+    reason: "pH correction",
     amount: "30mL",
-    industry: "Paper/Textile",
+    industry: "Textile",
   },
-];
-
-const mockPredictionData = [
-  { time: "0", waterLevel: 65, ph: 7.2 },
-  { time: "2", waterLevel: 67, ph: 7.1 },
-  { time: "4", waterLevel: 70, ph: 7.0 },
-  { time: "6", waterLevel: 74, ph: 6.9 },
-  { time: "8", waterLevel: 79, ph: 6.8 },
-  { time: "10", waterLevel: 83, ph: 6.7 },
 ];
 
 export default function Index() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const { sensorData, historicalData, getRawTelemetry } = useMockSensorData();
 
   const getStatus = (param: string, value: number): StatusType => {
@@ -137,39 +124,77 @@ export default function Index() {
 
   const alertMessage =
     sensorData.waterLevel > 75
-      ? `Notification: AI predicts potential overflow in T-minus ${Math.floor(10 - (sensorData.waterLevel - 75) / 2)} minutes.`
+      ? `Potential overflow in ${Math.floor(10 - (sensorData.waterLevel - 75) / 2)} minutes`
       : undefined;
 
+  const handleDownloadStats = useCallback(() => {
+    const stats = {
+      exportDate: new Date().toISOString(),
+      sensorData: sensorData,
+      historicalData: historicalData,
+      aiAnalysis: {
+        classification: aiClassification,
+        confidence: aiConfidence,
+      },
+      dosingLogs: mockDosingLogs,
+      systemStatus: "online",
+    };
+
+    const blob = new Blob([JSON.stringify(stats, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `salain-stats-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success("Statistics exported successfully");
+  }, [sensorData, historicalData, aiClassification, aiConfidence]);
+
   return (
-    <div className="min-h-screen bg-background scanlines">
+    <div className="min-h-screen bg-background">
       <Header
         onOpenNotifications={() => setIsNotificationOpen(true)}
-        onOpenTelemetry={() => setIsTelemetryOpen(true)}
+        onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
+        onDownloadStats={handleDownloadStats}
         notificationCount={unreadCount}
         systemStatus="online"
+        showAdvanced={showAdvanced}
       />
 
-      <main className="container mx-auto p-6 space-y-6">
-        {/* 6-Parameter Hero Grid */}
+      <main className="container mx-auto py-6 space-y-6">
+        {/* 6-Parameter Grid */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="glow-line flex-1" />
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.3em]">
-              Sensor Array — Live Telemetry
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">
+              Live Sensors
             </h2>
-            <div className="glow-line flex-1" />
+            {showAdvanced && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsTelemetryOpen(true)}
+                className="gap-2"
+              >
+                <Code2 className="w-4 h-4" />
+                Raw Data
+              </Button>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <ParameterCard
               title="pH Level"
               value={sensorData.ph}
               unit="pH"
               status={getStatus("ph", sensorData.ph)}
               sparklineData={historicalData.ph}
-              icon={<FlaskConical className="w-4 h-4" />}
+              icon={<FlaskConical className="w-5 h-5" />}
               minRange={6.5}
               maxRange={8.5}
+              showAdvanced={showAdvanced}
             />
             <ParameterCard
               title="Temperature"
@@ -177,9 +202,10 @@ export default function Index() {
               unit="°C"
               status={getStatus("temperature", sensorData.temperature)}
               sparklineData={historicalData.temperature}
-              icon={<Thermometer className="w-4 h-4" />}
+              icon={<Thermometer className="w-5 h-5" />}
               minRange={15}
               maxRange={35}
+              showAdvanced={showAdvanced}
             />
             <ParameterCard
               title="TDS"
@@ -187,9 +213,10 @@ export default function Index() {
               unit="ppm"
               status={getStatus("tds", sensorData.tds)}
               sparklineData={historicalData.tds}
-              icon={<Droplets className="w-4 h-4" />}
+              icon={<Droplets className="w-5 h-5" />}
               minRange={200}
               maxRange={800}
+              showAdvanced={showAdvanced}
             />
             <ParameterCard
               title="Turbidity"
@@ -197,9 +224,10 @@ export default function Index() {
               unit="NTU"
               status={getStatus("turbidity", sensorData.turbidity)}
               sparklineData={historicalData.turbidity}
-              icon={<Waves className="w-4 h-4" />}
+              icon={<Waves className="w-5 h-5" />}
               minRange={0}
               maxRange={25}
+              showAdvanced={showAdvanced}
             />
             <ParameterCard
               title="Flow Rate"
@@ -207,9 +235,10 @@ export default function Index() {
               unit="L/min"
               status={getStatus("flowRate", sensorData.flowRate)}
               sparklineData={historicalData.flowRate}
-              icon={<Activity className="w-4 h-4" />}
+              icon={<Activity className="w-5 h-5" />}
               minRange={40}
               maxRange={120}
+              showAdvanced={showAdvanced}
             />
             <ParameterCard
               title="Water Level"
@@ -217,42 +246,28 @@ export default function Index() {
               unit="%"
               status={getStatus("waterLevel", sensorData.waterLevel)}
               sparklineData={historicalData.waterLevel}
-              icon={<Gauge className="w-4 h-4" />}
+              icon={<Gauge className="w-5 h-5" />}
               minRange={20}
               maxRange={80}
+              showAdvanced={showAdvanced}
             />
           </div>
         </section>
 
-        {/* AI Insights */}
+        {/* AI & Dosing Section */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="glow-line flex-1" />
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.3em]">
-              Smart AI Layer — GBM & LSTM Insights
-            </h2>
-            <div className="glow-line flex-1" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <AIInsights
+              classification={aiClassification}
+              confidence={aiConfidence}
+              alertMessage={alertMessage}
+              showAdvanced={showAdvanced}
+            />
+            <DosingLogs 
+              logs={mockDosingLogs} 
+              showAdvanced={showAdvanced}
+            />
           </div>
-
-          <AIInsights
-            classification={aiClassification}
-            confidence={aiConfidence}
-            prediction={mockPredictionData}
-            alertMessage={alertMessage}
-          />
-        </section>
-
-        {/* Chemical Dosing */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="glow-line flex-1" />
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.3em]">
-              Logical Actuation — Chemical Integration
-            </h2>
-            <div className="glow-line flex-1" />
-          </div>
-
-          <DosingLogs logs={mockDosingLogs} />
         </section>
       </main>
 
