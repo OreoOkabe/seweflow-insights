@@ -11,6 +11,7 @@ interface ParameterCardProps {
   icon: React.ReactNode;
   minRange?: number;
   maxRange?: number;
+  showAdvanced?: boolean;
   className?: string;
 }
 
@@ -23,6 +24,7 @@ export function ParameterCard({
   icon,
   minRange,
   maxRange,
+  showAdvanced = false,
   className,
 }: ParameterCardProps) {
   const getValueClass = () => {
@@ -32,8 +34,8 @@ export function ParameterCard({
   };
 
   const getCardClass = () => {
-    if (status === "critical") return "glow-card-danger";
-    if (status === "warning" || status === "dosing" || status === "stagnant") return "glow-card-warning";
+    if (status === "critical") return "modern-card-danger";
+    if (status === "warning" || status === "dosing" || status === "stagnant") return "modern-card-warning";
     return "";
   };
 
@@ -44,42 +46,46 @@ export function ParameterCard({
   };
 
   return (
-    <div className={cn("glow-card p-4 flex flex-col gap-3", getCardClass(), className)}>
+    <div className={cn("modern-card p-5", getCardClass(), className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="text-primary/70">{icon}</div>
-          <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">
-            {title}
-          </h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+            <div className="text-primary">{icon}</div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-foreground">
+              {title}
+            </h3>
+            {showAdvanced && minRange !== undefined && maxRange !== undefined && (
+              <span className="text-xs text-muted-foreground font-mono">
+                Range: {minRange}-{maxRange} {unit}
+              </span>
+            )}
+          </div>
         </div>
         <StatusTag status={status} />
       </div>
 
       {/* Value Display */}
-      <div className="flex items-baseline gap-2">
-        <span className={cn("font-mono-data text-4xl font-semibold", getValueClass())}>
+      <div className="flex items-baseline gap-2 mb-4">
+        <span className={cn("font-mono-data text-3xl font-semibold", getValueClass())}>
           {value.toFixed(1)}
         </span>
-        <span className="text-muted-foreground text-sm font-mono">{unit}</span>
+        <span className="text-muted-foreground text-sm">{unit}</span>
       </div>
 
-      {/* Range indicator */}
-      {minRange !== undefined && maxRange !== undefined && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-          <span>Range: {minRange} - {maxRange} {unit}</span>
+      {/* Sparkline - Only show in advanced mode */}
+      {showAdvanced && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground">
+              30 min trend
+            </span>
+          </div>
+          <Sparkline data={sparklineData} status={getSparklineStatus()} />
         </div>
       )}
-
-      {/* Sparkline */}
-      <div className="mt-auto">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-            30 MIN TREND
-          </span>
-        </div>
-        <Sparkline data={sparklineData} status={getSparklineStatus()} />
-      </div>
     </div>
   );
 }

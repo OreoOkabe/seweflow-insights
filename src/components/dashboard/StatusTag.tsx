@@ -7,35 +7,35 @@ interface StatusTagProps {
   className?: string;
 }
 
-const statusConfig: Record<StatusType, { label: string; dotClass: string; textClass: string }> = {
+const statusConfig: Record<StatusType, { label: string; bgClass: string; textClass: string }> = {
   filtering: {
-    label: "FILTERING",
-    dotClass: "status-dot-healthy",
-    textClass: "text-primary",
+    label: "Filtering",
+    bgClass: "bg-success/10",
+    textClass: "text-success",
   },
   dosing: {
-    label: "DOSING",
-    dotClass: "status-dot-warning",
+    label: "Dosing",
+    bgClass: "bg-warning/10",
     textClass: "text-warning",
   },
   stagnant: {
-    label: "STAGNANT",
-    dotClass: "status-dot-warning",
+    label: "Stagnant",
+    bgClass: "bg-warning/10",
     textClass: "text-warning",
   },
   optimal: {
-    label: "OPTIMAL",
-    dotClass: "status-dot-healthy",
-    textClass: "text-primary",
+    label: "Optimal",
+    bgClass: "bg-success/10",
+    textClass: "text-success",
   },
   warning: {
-    label: "WARNING",
-    dotClass: "status-dot-warning",
+    label: "Warning",
+    bgClass: "bg-warning/10",
     textClass: "text-warning",
   },
   critical: {
-    label: "CRITICAL",
-    dotClass: "status-dot-danger",
+    label: "Critical",
+    bgClass: "bg-destructive/10",
     textClass: "text-destructive",
   },
 };
@@ -46,14 +46,18 @@ export function StatusTag({ status, className }: StatusTagProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 px-2.5 py-1 rounded bg-secondary/50 border border-primary/10",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+        config.bgClass,
+        config.textClass,
         className
       )}
     >
-      <div className={cn("status-dot", config.dotClass)} />
-      <span className={cn("font-mono text-xs font-medium tracking-widest", config.textClass)}>
-        {config.label}
-      </span>
+      <div className={cn("w-1.5 h-1.5 rounded-full", 
+        status === "critical" ? "bg-destructive" : 
+        status === "warning" || status === "dosing" || status === "stagnant" ? "bg-warning" : 
+        "bg-success"
+      )} />
+      {config.label}
     </div>
   );
 }
