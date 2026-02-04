@@ -17,7 +17,16 @@ export type Database = {
       [_ in never]: never
     }
     Views: {
-      [_ in never]: never
+      sensor_readings: {
+        Row: {
+          created_at: string | null
+          id: number | null
+          reading_value: number | null
+          sensor_name: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
