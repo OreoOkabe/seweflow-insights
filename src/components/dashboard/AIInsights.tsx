@@ -11,6 +11,7 @@ interface AIInsightsProps {
 
 const classificationColors: Record<string, { bg: string; text: string }> = {
   "Optimal Flow": { bg: "bg-success/10", text: "text-success" },
+  "Safe - Non-Potable": { bg: "bg-success/10", text: "text-success" },
   "Low-Level Contamination": { bg: "bg-warning/10", text: "text-warning" },
   "High-Acidity Waste": { bg: "bg-warning/10", text: "text-warning" },
   "Critical Blockage": { bg: "bg-destructive/10", text: "text-destructive" },
@@ -64,7 +65,7 @@ export function AIInsights({
 
         {showAdvanced && (
           <div className="grid grid-cols-2 gap-2 pt-2">
-            {["Optimal Flow", "Low-Level Contamination", "High-Acidity Waste", "Critical Blockage"].map(
+            {["Safe - Non-Potable", "Optimal Flow", "Low-Level Contamination", "Critical Blockage"].map(
               (state) => {
                 const stateColors = classificationColors[state];
                 return (
