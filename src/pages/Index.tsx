@@ -14,7 +14,7 @@ import { AIInsights } from "@/components/dashboard/AIInsights";
 import { DosingLogs } from "@/components/dashboard/DosingLogs";
 import { NotificationCenter } from "@/components/dashboard/NotificationCenter";
 import { TelemetryModal } from "@/components/dashboard/TelemetryModal";
-import { useMockSensorData } from "@/hooks/useMockSensorData";
+import { useSensorData } from "@/hooks/useSensorData";
 import { StatusType } from "@/components/dashboard/StatusTag";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -77,7 +77,7 @@ export default function Index() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const { sensorData, historicalData, getRawTelemetry } = useMockSensorData();
+  const { sensorData, historicalData, getRawTelemetry, loading, error } = useSensorData();
 
   const getStatus = (param: string, value: number): StatusType => {
     switch (param) {
