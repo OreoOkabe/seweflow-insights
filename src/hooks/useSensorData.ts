@@ -10,6 +10,14 @@ export interface SensorData {
   waterLevel: number;
 }
 
+export interface AIData {
+  classification: string;
+  confidence: number;
+  lstmPredPh: number;
+  lstmPredTds: number;
+  lstmPredTurb: number;
+}
+
 export interface HistoricalData {
   ph: number[];
   temperature: number[];
@@ -28,8 +36,17 @@ const defaultSensorData: SensorData = {
   waterLevel: 0,
 };
 
+const defaultAIData: AIData = {
+  classification: "Loading...",
+  confidence: 0,
+  lstmPredPh: 0,
+  lstmPredTds: 0,
+  lstmPredTurb: 0,
+};
+
 export function useSensorData() {
   const [sensorData, setSensorData] = useState<SensorData>(defaultSensorData);
+  const [aiData, setAIData] = useState<AIData>(defaultAIData);
   const [historicalData, setHistoricalData] = useState<HistoricalData>({
     ph: [],
     temperature: [],
@@ -46,7 +63,7 @@ export function useSensorData() {
       const { data, error: fetchError } = await externalSupabase
         .from("sensor_readings")
         .select("*")
-        .order("created_at", { ascending: false })
+        .order("timestamp", { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -58,15 +75,25 @@ export function useSensorData() {
 
       if (data) {
         // Map your table columns to dashboard fields
-        // Adjust these mappings if your column names differ
+        // Your columns: pH, TDS, Turb, Temp, level, Flow, timestamp
         setSensorData({
-          ph: data.ph ?? 0,
-          temperature: data.temperature ?? 0,
-          tds: data.tds ?? 0,
-          turbidity: data.turbidity ?? 0,
-          flowRate: data.flow_rate ?? data.flowRate ?? 0,
-          waterLevel: data.water_level ?? data.waterLevel ?? 0,
+          ph: data.pH ?? 0,
+          temperature: data.Temp ?? 0,
+          tds: data.TDS ?? 0,
+          turbidity: data.Turb ?? 0,
+          flowRate: data.Flow ?? 0,
+          waterLevel: data.level ?? 0,
         });
+        
+        // Map AI columns
+        setAIData({
+          classification: data.ai_state ?? "Unknown",
+          confidence: Math.round((data.ai_confidence ?? 0) * 100),
+          lstmPredPh: data.lstm_pred_ph ?? 0,
+          lstmPredTds: data.lstm_pred_tds ?? 0,
+          lstmPredTurb: data.lstm_pred_turb ?? 0,
+        });
+        
         setError(null);
       }
     } catch (err) {
@@ -82,7 +109,7 @@ export function useSensorData() {
       const { data, error: fetchError } = await externalSupabase
         .from("sensor_readings")
         .select("*")
-        .order("created_at", { ascending: false })
+        .order("timestamp", { ascending: false })
         .limit(30);
 
       if (fetchError) {
@@ -94,12 +121,12 @@ export function useSensorData() {
         // Reverse to get chronological order for sparklines
         const reversed = [...data].reverse();
         setHistoricalData({
-          ph: reversed.map((d) => d.ph ?? 0),
-          temperature: reversed.map((d) => d.temperature ?? 0),
-          tds: reversed.map((d) => d.tds ?? 0),
-          turbidity: reversed.map((d) => d.turbidity ?? 0),
-          flowRate: reversed.map((d) => d.flow_rate ?? d.flowRate ?? 0),
-          waterLevel: reversed.map((d) => d.water_level ?? d.waterLevel ?? 0),
+          ph: reversed.map((d) => d.pH ?? 0),
+          temperature: reversed.map((d) => d.Temp ?? 0),
+          tds: reversed.map((d) => d.TDS ?? 0),
+          turbidity: reversed.map((d) => d.Turb ?? 0),
+          flowRate: reversed.map((d) => d.Flow ?? 0),
+          waterLevel: reversed.map((d) => d.level ?? 0),
         });
       }
     } catch (err) {
@@ -137,13 +164,14 @@ export function useSensorData() {
       },
       ml_models: {
         gbm_classifier: {
-          classification: "Optimal Flow",
-          confidence: 0.94,
+          classification: aiData.classification,
+          confidence: aiData.confidence / 100,
         },
         lstm_predictor: {
           forecast_horizon_min: 10,
-          predicted_water_level: 68.5,
-          predicted_ph: 7.1,
+          predicted_ph: aiData.lstmPredPh,
+          predicted_tds: aiData.lstmPredTds,
+          predicted_turb: aiData.lstmPredTurb,
         },
       },
       gpio_status: {
@@ -152,8 +180,8 @@ export function useSensorData() {
         main_valve: "OPEN",
       },
     }),
-    [sensorData]
+    [sensorData, aiData]
   );
 
-  return { sensorData, historicalData, getRawTelemetry, loading, error };
+  return { sensorData, historicalData, aiData, getRawTelemetry, loading, error };
 }
