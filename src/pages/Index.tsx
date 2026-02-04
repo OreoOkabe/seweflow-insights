@@ -111,13 +111,14 @@ export default function Index() {
 
   const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
-  // Use AI data from database, with fallback logic
+  // Use AI data from database, with fallback logic for post-filtration
   const aiClassification = aiData.classification !== "Unknown" && aiData.classification !== "Loading..." 
     ? aiData.classification 
     : (() => {
         if (sensorData.waterLevel > 85) return "Critical Blockage";
         if (sensorData.ph < 5 || sensorData.ph > 9) return "High-Acidity Waste";
         if (sensorData.tds > 800) return "Low-Level Contamination";
+        if (sensorData.turbidity < 0.5 && sensorData.tds < 350) return "Safe - Non-Potable";
         return "Optimal Flow";
       })();
 
