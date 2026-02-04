@@ -77,7 +77,7 @@ export default function Index() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const { sensorData, historicalData, getRawTelemetry, loading, error } = useSensorData();
+  const { sensorData, historicalData, aiData, getRawTelemetry, loading, error } = useSensorData();
 
   const getStatus = (param: string, value: number): StatusType => {
     switch (param) {
@@ -111,16 +111,17 @@ export default function Index() {
 
   const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
-  const aiClassification = useMemo(() => {
-    if (sensorData.waterLevel > 85) return "Critical Blockage";
-    if (sensorData.ph < 5 || sensorData.ph > 9) return "High-Acidity Waste";
-    if (sensorData.tds > 800) return "Low-Level Contamination";
-    return "Optimal Flow";
-  }, [sensorData]);
+  // Use AI data from database, with fallback logic
+  const aiClassification = aiData.classification !== "Unknown" && aiData.classification !== "Loading..." 
+    ? aiData.classification 
+    : (() => {
+        if (sensorData.waterLevel > 85) return "Critical Blockage";
+        if (sensorData.ph < 5 || sensorData.ph > 9) return "High-Acidity Waste";
+        if (sensorData.tds > 800) return "Low-Level Contamination";
+        return "Optimal Flow";
+      })();
 
-  const aiConfidence = useMemo(() => {
-    return Math.floor(85 + Math.random() * 12);
-  }, [sensorData]);
+  const aiConfidence = aiData.confidence > 0 ? aiData.confidence : Math.floor(85 + Math.random() * 12);
 
   const alertMessage =
     sensorData.waterLevel > 75
