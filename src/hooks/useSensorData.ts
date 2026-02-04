@@ -88,8 +88,8 @@ export function useSensorData() {
     lstmPredTurb: 2.0,
   });
 
-  const [historicalData, setHistoricalData] = useState<HistoricalData>(generateInitialHistory);
-  const [loading, setLoading] = useState(false);
+  const [historicalData, setHistoricalData] = useState<HistoricalData>(() => generateInitialHistory());
+  const [loading] = useState(false);
   const [error] = useState<string | null>(null);
 
   // Simulate polling by updating values every 5 seconds
