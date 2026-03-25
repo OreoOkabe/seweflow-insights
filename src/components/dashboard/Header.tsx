@@ -1,4 +1,5 @@
-import { Activity, Bell, Download, Eye, EyeOff, Settings } from "lucide-react";
+import { Bell, Download, Eye, EyeOff, Settings } from "lucide-react";
+import salainLogo from "@/assets/salain-logo.png";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -39,9 +40,7 @@ export function Header({
       {/* Logo & Title */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Activity className="w-5 h-5 text-primary" />
-          </div>
+          <img src={salainLogo} alt="S.A.L.A.I.N. Logo" className="w-10 h-10 rounded-lg object-contain" />
           <div>
             <h1 className="text-lg font-semibold text-foreground">
               S.A.L.A.I.N.

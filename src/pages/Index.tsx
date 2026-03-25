@@ -50,26 +50,26 @@ const mockDosingLogs = [
   {
     id: "1",
     timestamp: "14:25",
-    chemical: "HCl Solution",
-    reason: "Neutralizing high alkalinity",
-    amount: "25mL",
-    industry: "Metal",
+    chemical: "Sodium Hypochlorite (NaOCl)",
+    reason: "Disinfection cycle – reducing bacterial load post-filtration",
+    amount: "15mL",
+    industry: "Wastewater",
   },
   {
     id: "2",
     timestamp: "13:58",
-    chemical: "NaOH Solution",
-    reason: "Breaking down organic compounds",
-    amount: "40mL",
-    industry: "Paper",
+    chemical: "Sodium Hypochlorite (NaOCl)",
+    reason: "Residual chlorine maintenance for safe non-potable use",
+    amount: "10mL",
+    industry: "Wastewater",
   },
   {
     id: "3",
     timestamp: "12:45",
-    chemical: "NaOH Solution",
-    reason: "pH correction",
-    amount: "30mL",
-    industry: "Textile",
+    chemical: "Sodium Hypochlorite (NaOCl)",
+    reason: "Scheduled micro-dose to prevent biofilm buildup",
+    amount: "12mL",
+    industry: "Wastewater",
   },
 ];
 
@@ -264,6 +264,11 @@ export default function Index() {
               confidence={aiConfidence}
               alertMessage={alertMessage}
               showAdvanced={showAdvanced}
+              predictions={{
+                ph: aiData.lstmPredPh,
+                tds: aiData.lstmPredTds,
+                turbidity: aiData.lstmPredTurb,
+              }}
             />
             <DosingLogs 
               logs={mockDosingLogs} 
