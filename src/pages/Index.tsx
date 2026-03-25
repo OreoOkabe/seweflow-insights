@@ -264,6 +264,11 @@ export default function Index() {
               confidence={aiConfidence}
               alertMessage={alertMessage}
               showAdvanced={showAdvanced}
+              predictions={{
+                ph: aiData.lstmPredPh,
+                tds: aiData.lstmPredTds,
+                turbidity: aiData.lstmPredTurb,
+              }}
             />
             <DosingLogs 
               logs={mockDosingLogs} 
